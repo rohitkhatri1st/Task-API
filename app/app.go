@@ -12,7 +12,8 @@ type App struct {
 	Config *config.APPConfig
 
 	// List of services this app is implementing
-	Task Task
+	Task    Task
+	Utility Utility
 }
 
 // Options contains arguments required to create a new app instance

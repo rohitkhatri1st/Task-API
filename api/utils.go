@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/rohitkhatri1st/Task-API/model"
@@ -78,15 +79,33 @@ func (a *API) DecodeJSONBody(r *http.Request, dst interface{}) error {
 	return nil
 }
 
-func (a *API) SendResponse(w http.ResponseWriter, r *http.Request, respCode int, payload interface{}, errorMsg string) {
+func (a *API) SendJsonResponse(w http.ResponseWriter, respCode int, payload interface{}, err ...error) {
 	cr := model.CustomResponse{Status: "success", StatusCode: http.StatusOK, Data: payload}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(respCode)
-	if respCode >= 400 || respCode < 200 {
+	errMsgs := []string{}
+	for _, v := range err {
+		if v != nil {
+			errMsgs = append(errMsgs, v.Error())
+		}
+	}
+	if len(errMsgs) > 0 {
 		cr.Status = "failure"
 		cr.StatusCode = respCode
-		cr.Data = errorMsg
-		w.WriteHeader(respCode)
+		cr.Data = errMsgs
 	}
 	jsonResponse, _ := json.Marshal(cr)
 	w.Write(jsonResponse)
+}
+
+func (a *API) GetPageValue(r *http.Request) int {
+	var val int
+	var err error
+	if r.URL.Query().Get("page") != "" {
+		val, err = strconv.Atoi(r.URL.Query().Get("page"))
+		if err != nil {
+			val = 0
+		}
+	}
+	return val
 }

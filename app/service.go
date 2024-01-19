@@ -7,4 +7,8 @@ func InitService(a *App) {
 		App:    a,
 		Config: &a.Config.TaskConfig,
 	})
+	a.Utility = InitUtility(&UtilityOpts{
+		App:    a,
+		Logger: a.Logger,
+	})
 }

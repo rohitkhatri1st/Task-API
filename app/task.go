@@ -1,7 +1,7 @@
 package app
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/rohitkhatri1st/Task-API/database/psql"
 	"github.com/rohitkhatri1st/Task-API/model"
@@ -11,8 +11,11 @@ import (
 )
 
 type Task interface {
-	SomeTaskLogic()
-	CreateTask(task *model.Task) error
+	CreateTask(task *model.Task) (*model.Task, error)
+	UpdateTask(task *model.Task) (*model.Task, error)
+	DeleteTask(taskId uint) error
+	GetTask(taskId uint) (*model.Task, error)
+	GetAllTasks(pageNo uint) ([]model.Task, error)
 }
 
 type TaskImpl struct {
@@ -33,7 +36,10 @@ func InitTask(opts *TaskImplOpts) Task {
 		DbName:   opts.Config.DBName,
 	}
 	psql := psql.InitPsql(&taskDbConfig)
-	psql.AutoMigrate(&model.Task{})
+	err := psql.AutoMigrate(&model.Task{})
+	if err != nil {
+		log.Fatal(err)
+	}
 	ti := TaskImpl{
 		App:    opts.App,
 		Logger: &l,
@@ -42,11 +48,46 @@ func InitTask(opts *TaskImplOpts) Task {
 	return &ti
 }
 
-func (ti *TaskImpl) SomeTaskLogic() {
-	fmt.Println("Implementing task logic")
+func (ti *TaskImpl) CreateTask(task *model.Task) (*model.Task, error) {
+	db := ti.Db.Create(task)
+	if err := db.Error; err != nil {
+		return nil, err
+	}
+	return task, nil
 }
 
-func (ti *TaskImpl) CreateTask(task *model.Task) error {
-	ti.Db.Create(task)
+func (ti *TaskImpl) UpdateTask(task *model.Task) (*model.Task, error) {
+	db := ti.Db.Where("id = ?", task.ID).Updates(task)
+	if err := db.Error; err != nil {
+		return nil, err
+	}
+	return task, nil
+}
+
+func (ti *TaskImpl) DeleteTask(taskId uint) error {
+	db := ti.Db.Where("id = ?", taskId).Delete(model.Task{})
+	if err := db.Error; err != nil {
+		return err
+	}
 	return nil
+}
+
+func (ti *TaskImpl) GetTask(taskId uint) (*model.Task, error) {
+	task := &model.Task{}
+	db := ti.Db.First(task, taskId)
+	if err := db.Error; err != nil {
+		return nil, err
+	}
+	return task, nil
+}
+
+func (ti *TaskImpl) GetAllTasks(pageNo uint) ([]model.Task, error) {
+	tasks := []model.Task{}
+	pageSize := 2
+	offset := (int(pageNo) - 1) * pageSize
+	db := ti.Db.Order("id").Offset(offset).Limit(pageSize).Find(&tasks)
+	if err := db.Error; err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }
