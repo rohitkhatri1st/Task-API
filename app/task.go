@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/rohitkhatri1st/Task-API/database/psql"
+	"github.com/rohitkhatri1st/Task-API/model"
 	"github.com/rohitkhatri1st/Task-API/server/config"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
@@ -11,6 +12,7 @@ import (
 
 type Task interface {
 	SomeTaskLogic()
+	CreateTask(task *model.Task) error
 }
 
 type TaskImpl struct {
@@ -25,12 +27,13 @@ type TaskImplOpts struct {
 }
 
 func InitTask(opts *TaskImplOpts) Task {
-	l := opts.App.Logger.With().Str("service", "Example").Logger()
+	l := opts.App.Logger.With().Str("service", "Task").Logger()
 	taskDbConfig := config.PsqlConfig{
 		DbConfig: opts.App.Config.DatabaseConfig,
 		DbName:   opts.Config.DBName,
 	}
 	psql := psql.InitPsql(&taskDbConfig)
+	psql.AutoMigrate(&model.Task{})
 	ti := TaskImpl{
 		App:    opts.App,
 		Logger: &l,
@@ -41,4 +44,9 @@ func InitTask(opts *TaskImplOpts) Task {
 
 func (ti *TaskImpl) SomeTaskLogic() {
 	fmt.Println("Implementing task logic")
+}
+
+func (ti *TaskImpl) CreateTask(task *model.Task) error {
+	ti.Db.Create(task)
+	return nil
 }
