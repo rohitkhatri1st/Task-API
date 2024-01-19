@@ -1,0 +1,17 @@
+[server]
+listenAddr="localhost"
+port="8001"
+env="staging"
+readTimeout=60
+writeTimeout=60
+
+[database]
+host="localhost"
+username="postgres"
+password="testing"
+port="5432"
+sslMode="disable"
+
+[app]
+    [app.task]
+    dbName="stage_tasks"
