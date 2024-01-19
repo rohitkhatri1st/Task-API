@@ -22,7 +22,7 @@ func (a *API) InitRoutes() {
 
 func (a *API) healthCheck(w http.ResponseWriter, r *http.Request) {
 	asd := model.Task{
-		Name: "Hello",
+		Title: "Hello",
 	}
 	abc, _ := json.Marshal(asd)
 	w.WriteHeader(http.StatusOK)
